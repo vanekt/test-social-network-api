@@ -94,3 +94,31 @@ func (c *AuthController) Logout() gin.HandlerFunc {
 		return
 	}
 }
+
+func (c *AuthController) CheckAuth() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		tokenString, err := ctx.Cookie(os.Getenv("TOKEN_COOKIE_NAME"))
+		if err != nil {
+			c.logger.Errorf("[AuthController CheckAuth] Cannot get token from cookies. Trace %s", err.Error())
+			ctx.JSON(http.StatusOK, gin.H{
+				"success": false,
+			})
+			return
+		}
+
+		userId, err := util.GetUserIdFromToken(tokenString)
+		if err != nil {
+			c.logger.Errorf("[AuthController CheckAuth] Cannot fetch userId from token. Trace %s", err.Error())
+			ctx.JSON(http.StatusOK, gin.H{
+				"success": false,
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"payload": userId,
+		})
+		return
+	}
+}

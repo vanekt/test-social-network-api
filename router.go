@@ -19,4 +19,7 @@ func configureRouter(
 
 	logoutHandler := authController.Logout()
 	auth.GET("/logout", logoutHandler)
+
+	checkAuthHandler := authController.CheckAuth()
+	auth.GET("/check", checkAuthHandler)
 }

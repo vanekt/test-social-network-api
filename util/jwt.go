@@ -20,18 +20,18 @@ func CreateToken(userId uint32) (string, error) {
 	return tokenString, nil
 }
 
-func GetDataFromToken(tokenString string) (uint32, error) {
+func GetUserIdFromToken(tokenString string) (uint32, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(JwtSecretKey), nil
 	})
 
 	if err != nil {
-		return 0, errors.New("GetDataFromToken: Can't parse auth token: " + err.Error())
+		return 0, errors.New("GetUserIdFromToken: Can't parse auth token: " + err.Error())
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
-		return 0, errors.New("GetDataFromToken: Something went wrong")
+		return 0, errors.New("GetUserIdFromToken: Something went wrong")
 	}
 
 	return uint32(claims["userId"].(float64)), nil
