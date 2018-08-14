@@ -8,6 +8,7 @@ import (
 func configureRouter(
 	r *gin.Engine,
 	authController *controller.AuthController,
+	userController *controller.UserController,
 ) {
 	v1 := r.Group("/api/v1")
 
@@ -22,4 +23,10 @@ func configureRouter(
 
 	checkAuthHandler := authController.CheckAuth()
 	auth.GET("/check", checkAuthHandler)
+
+	// -------------------------------
+	users := v1.Group("/users").Use()
+
+	getUserHandler := userController.GetUserById()
+	users.GET("/:id", getUserHandler)
 }

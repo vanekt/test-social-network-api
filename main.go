@@ -20,10 +20,11 @@ func main() {
 
 	// init controllers
 	authController := controller.NewAuthController(logger, userModel)
+	userController := controller.NewUserController(logger, userModel)
 
 	// init gin
 	r := gin.Default()
-	configureRouter(r, authController)
+	configureRouter(r, authController, userController)
 
 	r.Run(":" + port)
 }
