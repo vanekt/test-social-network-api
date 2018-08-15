@@ -21,8 +21,8 @@ func NewAuthController(logger *logging.Logger, userModel *model.UserModel) *Auth
 }
 
 type LoginRequest struct {
-	Login    string `json:"login" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Login    string `json:"login"`
+	Password string `json:"password"`
 }
 
 func (c *AuthController) Login() gin.HandlerFunc {
@@ -38,7 +38,9 @@ func (c *AuthController) Login() gin.HandlerFunc {
 		if err != nil {
 			if err == sql.ErrNoRows {
 				c.logger.Errorf("[AuthController Login] User not found for login=%s", req.Login)
-				ctx.JSON(http.StatusNotFound, error.HttpResponseErrorNotFound)
+				ctx.JSON(http.StatusOK, gin.H{
+					"success": false,
+				})
 				return
 			}
 			c.logger.Errorf("[AuthController Login] GetUserByLogin error: %v", err.Error())
@@ -48,7 +50,9 @@ func (c *AuthController) Login() gin.HandlerFunc {
 
 		if ok := util.CheckPasswordHash(req.Password, user.Password); !ok {
 			c.logger.Errorf("[AuthController Login] Wrong password for userId=%d", user.Id)
-			ctx.JSON(http.StatusNotFound, error.HttpResponseErrorNotFound)
+			ctx.JSON(http.StatusOK, gin.H{
+				"success": false,
+			})
 			return
 		}
 
