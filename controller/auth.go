@@ -119,9 +119,16 @@ func (c *AuthController) CheckAuth() gin.HandlerFunc {
 			return
 		}
 
+		user, err := c.userModel.GetUserById(int(userId))
+		if err != nil {
+			c.logger.Errorf("[AuthController CheckAuth] GetUserById error: %v", err.Error())
+			ctx.JSON(http.StatusInternalServerError, error.HttpResponseErrorInternalServerError)
+			return
+		}
+
 		ctx.JSON(http.StatusOK, gin.H{
 			"success": true,
-			"payload": userId,
+			"payload": user,
 		})
 		return
 	}
