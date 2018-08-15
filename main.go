@@ -17,14 +17,16 @@ func main() {
 
 	// init models
 	userModel := model.NewUserModel(db, logger)
+	messagesModel := model.NewMessagesModel(db, logger)
 
 	// init controllers
 	authController := controller.NewAuthController(logger, userModel)
 	userController := controller.NewUserController(logger, userModel)
+	messagesController := controller.NewMessagesController(logger, messagesModel)
 
 	// init gin
 	r := gin.Default()
-	configureRouter(r, authController, userController)
+	configureRouter(r, authController, userController, messagesController)
 
 	r.Run(":" + port)
 }

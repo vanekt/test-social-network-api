@@ -9,6 +9,7 @@ func configureRouter(
 	r *gin.Engine,
 	authController *controller.AuthController,
 	userController *controller.UserController,
+	messagesController *controller.MessagesController,
 ) {
 	v1 := r.Group("/api/v1")
 
@@ -29,4 +30,10 @@ func configureRouter(
 
 	getUserHandler := userController.GetUserById()
 	users.GET("/:id", getUserHandler)
+
+	// -------------------------------
+	dialogs := v1.Group("/dialogs").Use()
+
+	getDialogsHandler := messagesController.GetDialogsByUserId()
+	dialogs.GET("/:id", getDialogsHandler)
 }
