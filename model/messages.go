@@ -16,10 +16,13 @@ func NewMessagesModel(db *sqlx.DB, logger *logging.Logger) *MessagesModel {
 	return &MessagesModel{db, logger}
 }
 
-func (m *MessagesModel) GetDialogsByUserId(userId int) ([]uint32, error) {
-	var peers []uint32
-	err := m.db.Select(&peers, `select peer from dialogs WHERE uid = ? order by last_message_datetime desc`, userId)
-	return peers, err
+func (m *MessagesModel) GetDialogsByUserId(userId int) ([]entity.Dialog, error) {
+	var dialogs []entity.Dialog
+	q := `select d.peer, d.last_message_datetime, u.fullname, u.image
+		  from dialogs d join users u on d.peer = u.id
+		  where d.uid = ? order by d.last_message_datetime desc`
+	err := m.db.Select(&dialogs, q, userId)
+	return dialogs, err
 }
 
 func (m *MessagesModel) CreateMessage(msg *entity.Message) (message *entity.Message, err error) {

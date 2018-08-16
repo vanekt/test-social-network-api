@@ -7,3 +7,10 @@ type Message struct {
 	AuthorId uint32 `db:"author_id" json:"author_id"`
 	PeerId   uint32 `db:"peer" json:"peer"`
 }
+
+type Dialog struct {
+	PeerId   uint32 `db:"peer" json:"peerId"`
+	Datetime uint32 `db:"last_message_datetime" json:"datetime"`
+	Username string `db:"fullname" json:"username"`
+	Image    string `db:"image" json:"image"`
+}

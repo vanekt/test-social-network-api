@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"vanekt/test-social-network-api/entity"
 	"vanekt/test-social-network-api/error"
 	"vanekt/test-social-network-api/model"
 	"vanekt/test-social-network-api/util"
@@ -50,7 +51,7 @@ func (c *MessagesController) GetDialogsByUserId() gin.HandlerFunc {
 			return
 		}
 
-		dialogs := make([]uint32, 0)
+		dialogs := make([]entity.Dialog, 0)
 		dialogs, err = c.messagesModel.GetDialogsByUserId(userId)
 		if err != nil {
 			c.logger.Errorf("[MessagesController GetDialogsByUserId] messagesModel.GetDialogsByUserId err. Trace %s", err.Error())
