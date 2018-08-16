@@ -36,4 +36,10 @@ func configureRouter(
 
 	getDialogsHandler := messagesController.GetDialogsByUserId()
 	dialogs.GET("/:id", getDialogsHandler)
+
+	// -------------------------------
+	messages := v1.Group("/messages").Use()
+
+	getDialogMessagesHandler := messagesController.GetDialogMessages()
+	messages.GET("/:userId/:peerId", getDialogMessagesHandler)
 }

@@ -64,3 +64,55 @@ func (c *MessagesController) GetDialogsByUserId() gin.HandlerFunc {
 		return
 	}
 }
+
+func (c *MessagesController) GetDialogMessages() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		strUserId := ctx.Param("userId")
+		userId, err := strconv.Atoi(strUserId)
+		if err != nil {
+			c.logger.Errorf("[MessagesController GetDialogMessages] parse request userId error: %v", err.Error())
+			ctx.JSON(http.StatusBadRequest, error.HttpResponseErrorBadRequest)
+			return
+		}
+
+		strPeerId := ctx.Param("peerId")
+		peerId, err := strconv.Atoi(strPeerId)
+		if err != nil {
+			c.logger.Errorf("[MessagesController GetDialogMessages] parse request peerId error: %v", err.Error())
+			ctx.JSON(http.StatusBadRequest, error.HttpResponseErrorBadRequest)
+			return
+		}
+
+		tokenString, err := ctx.Cookie(os.Getenv("TOKEN_COOKIE_NAME"))
+		if err != nil {
+			c.logger.Errorf("[MessagesController GetDialogMessages] Cannot get token from cookies. Trace %s", err.Error())
+			ctx.JSON(http.StatusUnauthorized, error.HttpResponseErrorBadRequest)
+			return
+		}
+
+		authUserId, err := util.GetUserIdFromToken(tokenString)
+		if err != nil {
+			c.logger.Errorf("[MessagesController GetDialogMessages] Cannot fetch authUserId from token. Trace %s", err.Error())
+			ctx.JSON(http.StatusUnauthorized, error.HttpResponseErrorBadRequest)
+			return
+		}
+
+		if userId != int(authUserId) {
+			c.logger.Error("[MessagesController GetDialogMessages] userId != authUserId")
+			ctx.JSON(http.StatusForbidden, error.HttpResponseErrorForbidden)
+			return
+		}
+
+		messages := make([]entity.Message, 0)
+		messages, err = c.messagesModel.GetDialogMessages(userId, peerId)
+		if err != nil {
+			c.logger.Errorf("[MessagesController GetDialogMessages] messagesModel.GetDialogMessages err. Trace %s", err.Error())
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"payload": messages,
+		})
+		return
+	}
+}

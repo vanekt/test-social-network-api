@@ -25,6 +25,15 @@ func (m *MessagesModel) GetDialogsByUserId(userId int) ([]entity.Dialog, error) 
 	return dialogs, err
 }
 
+func (m *MessagesModel) GetDialogMessages(userId, peerId int) ([]entity.Message, error) {
+	var messages []entity.Message
+	q := `select e.message_id as id, m.datetime, m.text, m.author_id, e.peer 
+		  from message_entries e join messages m on e.message_id = m.id
+          where e.uid = ? and e.peer = ? order by e.message_id desc`
+	err := m.db.Select(&messages, q, userId, peerId)
+	return messages, err
+}
+
 func (m *MessagesModel) CreateMessage(msg *entity.Message) (message *entity.Message, err error) {
 	msg.Datetime = uint32(time.Now().Unix())
 	result, err := m.db.Exec(`insert into messages (datetime, text, author_id) values (?, ?, ?)`, msg.Datetime, msg.Text, msg.AuthorId)
