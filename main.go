@@ -12,6 +12,7 @@ import (
 
 func main() {
 	port := os.Getenv("PORT")
+	wsPort := os.Getenv("WS_PORT")
 	logger := NewLogger("test-social-network-api", logging.DEBUG)
 	db := sqlx.MustConnect("mysql", os.Getenv("SQL_DB_DSN"))
 
@@ -27,6 +28,9 @@ func main() {
 	// init gin
 	r := gin.Default()
 	configureRouter(r, authController, userController, messagesController)
+
+	ws := NewWebsocket(logger)
+	go ws.Run(":" + wsPort)
 
 	r.Run(":" + port)
 }
