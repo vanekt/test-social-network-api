@@ -14,32 +14,20 @@ func configureRouter(
 	v1 := r.Group("/api/v1")
 
 	// -------------------------------
-	auth := v1.Group("/auth").Use()
-
-	loginHandler := authController.Login()
-	auth.POST("/login", loginHandler)
-
-	logoutHandler := authController.Logout()
-	auth.GET("/logout", logoutHandler)
-
-	checkAuthHandler := authController.CheckAuth()
-	auth.GET("/check", checkAuthHandler)
+	auth := v1.Group("/auth")
+	auth.POST("/login", authController.Login)
+	auth.GET("/logout", authController.Logout)
+	auth.GET("/check", authController.CheckAuth)
 
 	// -------------------------------
-	users := v1.Group("/users").Use()
-
-	getUserHandler := userController.GetUserById()
-	users.GET("/:id", getUserHandler)
+	users := v1.Group("/users")
+	users.GET("/:id", userController.GetUserById)
 
 	// -------------------------------
-	dialogs := v1.Group("/dialogs").Use()
-
-	getDialogsHandler := messagesController.GetDialogsByUserId()
-	dialogs.GET("/:id", getDialogsHandler)
+	dialogs := v1.Group("/dialogs")
+	dialogs.GET("/:id", messagesController.GetDialogsByUserId)
 
 	// -------------------------------
-	messages := v1.Group("/messages").Use()
-
-	getDialogMessagesHandler := messagesController.GetDialogMessages()
-	messages.GET("/:userId/:peerId", getDialogMessagesHandler)
+	messages := v1.Group("/messages")
+	messages.GET("/:userId/:peerId", messagesController.GetDialogMessages)
 }
