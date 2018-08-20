@@ -20,28 +20,71 @@ var wsUpgrader = websocket.Upgrader{
 }
 
 type WS struct {
-	logger        *logging.Logger
-	httpServeMux  *http.ServeMux
-	wsConnMap     map[string]*wsConnection
-	wsConnMapMu   *sync.RWMutex
-	userConnMap   map[uint32]map[string]struct{}
-	userConnMapMu *sync.RWMutex
-	messagesModel *model.MessagesModel
+	logger             *logging.Logger
+	httpServeMux       *http.ServeMux
+	wsConnMap          map[string]*wsConnection
+	wsConnMapMu        *sync.RWMutex
+	userConnMap        map[uint32]map[string]struct{}
+	userConnMapMu      *sync.RWMutex
+	messagesModel      *model.MessagesModel
+	sendMessageChannel chan *entity.WSMessage
 }
 
 func NewWebsocket(logger *logging.Logger, messagesModel *model.MessagesModel) *WS {
 	return &WS{
-		logger:        logger,
-		httpServeMux:  http.NewServeMux(),
-		wsConnMap:     make(map[string]*wsConnection),
-		wsConnMapMu:   new(sync.RWMutex),
-		userConnMap:   make(map[uint32]map[string]struct{}),
-		userConnMapMu: new(sync.RWMutex),
-		messagesModel: messagesModel,
+		logger:             logger,
+		httpServeMux:       http.NewServeMux(),
+		wsConnMap:          make(map[string]*wsConnection),
+		wsConnMapMu:        new(sync.RWMutex),
+		userConnMap:        make(map[uint32]map[string]struct{}),
+		userConnMapMu:      new(sync.RWMutex),
+		messagesModel:      messagesModel,
+		sendMessageChannel: make(chan *entity.WSMessage),
 	}
 }
 
 func (ws *WS) Run(port string) {
+	go (func() {
+		for {
+			wsMessage := <-ws.sendMessageChannel
+			var targetConnections map[string]struct{}
+			switch wsMessage.Type {
+			case entity.WSMessageTypeCreateMessageSuccess:
+				newMessage := wsMessage.Payload.(*entity.Message)
+				var ok bool
+				targetConnections, ok = ws.getUserConn(newMessage.AuthorId)
+				if !ok {
+					ws.logger.Warningf("Cannot find ws user connections for %d", newMessage.AuthorId)
+					continue
+				}
+			case entity.WSMessageTypeNewMessage:
+				newMessage := wsMessage.Payload.(*entity.Message)
+				var ok bool
+				targetConnections, ok = ws.getUserConn(newMessage.PeerId)
+				if !ok {
+					ws.logger.Warningf("Cannot find ws user connections for %d", newMessage.PeerId)
+					continue
+				}
+			default:
+				ws.logger.Warning("Unknown WS message type")
+				continue
+			}
+
+			for connectionId := range targetConnections {
+				connection, ok := ws.getWsConn(connectionId)
+				if !ok {
+					ws.logger.Warningf("Cannot find ws user connection: %s", connectionId)
+					continue
+				}
+				payload, err := json.Marshal(wsMessage)
+				if err != nil {
+					ws.logger.Error("Cannot send ws message: %s", err.Error())
+				}
+				connection.SendTextMessage(payload)
+			}
+		}
+	})()
+
 	ws.httpServeMux.HandleFunc("/ws", ws.wsHandler)
 	ws.logger.Fatal(http.ListenAndServe(port, ws.httpServeMux))
 }
@@ -107,7 +150,16 @@ func (ws *WS) wsHandler(w http.ResponseWriter, r *http.Request) {
 
 		newMessage, err := ws.messagesModel.CreateMessage(&msg)
 		ws.logger.Notice("newMessage", newMessage)
-		// TODO send message with type CREATE_MESSAGE_SUCCESS
+
+		ws.sendMessageChannel <- &entity.WSMessage{
+			Type:    entity.WSMessageTypeCreateMessageSuccess,
+			Payload: newMessage,
+		}
+
+		ws.sendMessageChannel <- &entity.WSMessage{
+			Type:    entity.WSMessageTypeNewMessage,
+			Payload: newMessage,
+		}
 	}
 
 	currentWsConnection.Close()
