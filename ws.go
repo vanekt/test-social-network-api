@@ -59,6 +59,10 @@ func (ws *WS) Run(port string) {
 				}
 			case entity.WSMessageTypeNewMessage:
 				newMessage := wsMessage.Payload.(*entity.Message)
+				if newMessage.PeerId == newMessage.AuthorId {
+					ws.logger.Warning("WSMessageTypeNewMessage skip: newMessage.PeerId == newMessage.AuthorId")
+					continue
+				}
 				var ok bool
 				targetConnections, ok = ws.getUserConn(newMessage.PeerId)
 				if !ok {
