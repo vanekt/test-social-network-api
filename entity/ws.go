@@ -8,6 +8,6 @@ const (
 )
 
 type WSMessage struct {
-	Type    WSMessageType
-	Payload interface{}
+	Type    WSMessageType `json:"type"`
+	Payload interface{}   `json:"payload"`
 }
