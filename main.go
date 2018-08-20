@@ -29,7 +29,7 @@ func main() {
 	r := gin.Default()
 	configureRouter(r, authController, userController, messagesController)
 
-	ws := NewWebsocket(logger)
+	ws := NewWebsocket(logger, messagesModel)
 	go ws.Run(":" + wsPort)
 
 	r.Run(":" + port)

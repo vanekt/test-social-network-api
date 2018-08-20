@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 	"vanekt/test-social-network-api/entity"
+	"vanekt/test-social-network-api/model"
 	"vanekt/test-social-network-api/util"
 )
 
@@ -25,9 +26,10 @@ type WS struct {
 	wsConnMapMu   *sync.RWMutex
 	userConnMap   map[uint32]map[string]struct{}
 	userConnMapMu *sync.RWMutex
+	messagesModel *model.MessagesModel
 }
 
-func NewWebsocket(logger *logging.Logger) *WS {
+func NewWebsocket(logger *logging.Logger, messagesModel *model.MessagesModel) *WS {
 	return &WS{
 		logger:        logger,
 		httpServeMux:  http.NewServeMux(),
@@ -35,6 +37,7 @@ func NewWebsocket(logger *logging.Logger) *WS {
 		wsConnMapMu:   new(sync.RWMutex),
 		userConnMap:   make(map[uint32]map[string]struct{}),
 		userConnMapMu: new(sync.RWMutex),
+		messagesModel: messagesModel,
 	}
 }
 
@@ -77,7 +80,7 @@ func (ws *WS) wsHandler(w http.ResponseWriter, r *http.Request) {
 	for {
 		mt, message, err := conn.ReadMessage()
 		if err != nil {
-			ws.logger.Info(err)
+			ws.logger.Error(err)
 			break
 		}
 
@@ -98,9 +101,13 @@ func (ws *WS) wsHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		ws.logger.Warning("mt", mt)
-		ws.logger.Warning("message", string(message))
-		ws.logger.Warning("msg", msg)
+		//ws.logger.Warning("mt", mt)
+		//ws.logger.Warning("message", string(message))
+		//ws.logger.Warning("msg", msg)
+
+		newMessage, err := ws.messagesModel.CreateMessage(&msg)
+		ws.logger.Notice("newMessage", newMessage)
+		// TODO send message with type CREATE_MESSAGE_SUCCESS
 	}
 
 	currentWsConnection.Close()
@@ -118,7 +125,7 @@ func (ws *WS) sendHTTP500(w http.ResponseWriter, message string, err error) {
 func (ws *WS) addWsConn(sID string, wsConn *wsConnection) {
 	ws.wsConnMapMu.Lock()
 	ws.wsConnMap[sID] = wsConn
-	ws.logger.Notice(ws.wsConnMap)
+	ws.logger.Debug(ws.wsConnMap)
 	ws.wsConnMapMu.Unlock()
 }
 
@@ -144,7 +151,7 @@ func (ws *WS) addUserConn(uID uint32, connectionId string) {
 			connectionId: struct{}{},
 		}
 	}
-	ws.logger.Notice(ws.userConnMap)
+	ws.logger.Debug(ws.userConnMap)
 	ws.userConnMapMu.Unlock()
 }
 
