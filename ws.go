@@ -7,8 +7,11 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
+	"time"
 	"vanekt/test-social-network-api/entity"
+	"vanekt/test-social-network-api/util"
 )
 
 var wsUpgrader = websocket.Upgrader{
@@ -16,18 +19,22 @@ var wsUpgrader = websocket.Upgrader{
 }
 
 type WS struct {
-	logger       *logging.Logger
-	httpServeMux *http.ServeMux
-	wsConnMap    map[string]*wsConnection
-	wsConnMapMu  *sync.RWMutex
+	logger        *logging.Logger
+	httpServeMux  *http.ServeMux
+	wsConnMap     map[string]*wsConnection
+	wsConnMapMu   *sync.RWMutex
+	userConnMap   map[uint32]map[string]struct{}
+	userConnMapMu *sync.RWMutex
 }
 
 func NewWebsocket(logger *logging.Logger) *WS {
 	return &WS{
-		logger:       logger,
-		httpServeMux: http.NewServeMux(),
-		wsConnMap:    make(map[string]*wsConnection),
-		wsConnMapMu:  new(sync.RWMutex),
+		logger:        logger,
+		httpServeMux:  http.NewServeMux(),
+		wsConnMap:     make(map[string]*wsConnection),
+		wsConnMapMu:   new(sync.RWMutex),
+		userConnMap:   make(map[uint32]map[string]struct{}),
+		userConnMapMu: new(sync.RWMutex),
 	}
 }
 
@@ -39,9 +46,14 @@ func (ws *WS) Run(port string) {
 func (ws *WS) wsHandler(w http.ResponseWriter, r *http.Request) {
 	ws.logger.Debugf("Request for WebSocket connection by \"%s%s\"", r.Host, r.RequestURI)
 
-	var authString string
+	var tokenString string
 	if authCookie, err := r.Cookie(os.Getenv("TOKEN_COOKIE_NAME")); err == nil {
-		authString = authCookie.Value
+		tokenString = authCookie.Value
+	}
+
+	authUserId, err := util.GetUserIdFromToken(tokenString)
+	if err != nil {
+		ws.logger.Warningf("[wsHandler] Cannot fetch authUserId from token. Trace %s", err.Error())
 	}
 
 	httpHeader := http.Header{}
@@ -50,14 +62,17 @@ func (ws *WS) wsHandler(w http.ResponseWriter, r *http.Request) {
 		ws.sendHTTP500(w, "Failed to upgrade the connection", err)
 		return
 	}
-	ws.logger.Debugf("Connection opened for %q", authString)
+	ws.logger.Debugf("Connection opened for %d", authUserId)
 
 	currentWsConnection := &wsConnection{
 		wsConn: conn,
 		mu:     &sync.Mutex{},
 		logger: ws.logger,
 	}
-	ws.addWsConn(authString, currentWsConnection)
+
+	connectionId := strconv.Itoa(int(time.Now().UnixNano())) + strconv.Itoa(int(authUserId))
+	ws.addWsConn(connectionId, currentWsConnection)
+	ws.addUserConn(authUserId, connectionId)
 
 	for {
 		mt, message, err := conn.ReadMessage()
@@ -89,8 +104,9 @@ func (ws *WS) wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentWsConnection.Close()
-	ws.logger.Debugf("Connection closed for %q", authString)
-	ws.delWsConn(authString)
+	ws.logger.Debugf("Connection closed for %d", authUserId)
+	ws.delWsConn(connectionId)
+	ws.delUserConn(authUserId, connectionId)
 }
 
 func (ws *WS) sendHTTP500(w http.ResponseWriter, message string, err error) {
@@ -116,5 +132,34 @@ func (ws *WS) getWsConn(sID string) (wsConn *wsConnection, ok bool) {
 	ws.wsConnMapMu.RLock()
 	wsConn, ok = ws.wsConnMap[sID]
 	ws.wsConnMapMu.RUnlock()
+	return
+}
+
+func (ws *WS) addUserConn(uID uint32, connectionId string) {
+	ws.userConnMapMu.Lock()
+	if connectionsList, ok := ws.userConnMap[uID]; ok {
+		connectionsList[connectionId] = struct{}{}
+	} else {
+		ws.userConnMap[uID] = map[string]struct{}{
+			connectionId: struct{}{},
+		}
+	}
+	ws.logger.Notice(ws.userConnMap)
+	ws.userConnMapMu.Unlock()
+}
+
+func (ws *WS) delUserConn(uID uint32, connectionId string) {
+	ws.userConnMapMu.Lock()
+	if connectionsList, ok := ws.userConnMap[uID]; ok {
+		connectionsList[connectionId] = struct{}{}
+		delete(connectionsList, connectionId)
+	}
+	ws.userConnMapMu.Unlock()
+}
+
+func (ws *WS) getUserConn(uID uint32) (userConn map[string]struct{}, ok bool) {
+	ws.userConnMapMu.RLock()
+	userConn, ok = ws.userConnMap[uID]
+	ws.userConnMapMu.RUnlock()
 	return
 }
