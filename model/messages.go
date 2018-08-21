@@ -29,7 +29,7 @@ func (m *MessagesModel) GetDialogMessages(userId, peerId int) ([]entity.Message,
 	var messages []entity.Message
 	q := `select e.message_id as id, m.datetime, m.text, m.author_id, e.peer 
 		  from message_entries e join messages m on e.message_id = m.id
-          where e.uid = ? and e.peer = ? order by e.message_id desc`
+          where e.uid = ? and e.peer = ? order by e.message_id asc`
 	err := m.db.Select(&messages, q, userId, peerId)
 	return messages, err
 }
