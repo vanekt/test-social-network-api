@@ -3,7 +3,7 @@ package model
 import (
 	"github.com/jmoiron/sqlx"
 	"github.com/op/go-logging"
-	"vanekt/test-social-network-api/entity"
+	"github.com/vanekt/test-social-network-api/entity"
 )
 
 type UserModel struct {

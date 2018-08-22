@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"vanekt/test-social-network-api/controller"
+	"github.com/vanekt/test-social-network-api/controller"
 )
 
 func configureRouter(

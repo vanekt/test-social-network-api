@@ -3,8 +3,8 @@ package model
 import (
 	"github.com/jmoiron/sqlx"
 	"github.com/op/go-logging"
+	"github.com/vanekt/test-social-network-api/entity"
 	"time"
-	"vanekt/test-social-network-api/entity"
 )
 
 type MessagesModel struct {

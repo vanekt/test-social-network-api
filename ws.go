@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"github.com/op/go-logging"
+	"github.com/vanekt/test-social-network-api/entity"
+	"github.com/vanekt/test-social-network-api/model"
+	"github.com/vanekt/test-social-network-api/util"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
 	"sync"
 	"time"
-	"vanekt/test-social-network-api/entity"
-	"vanekt/test-social-network-api/model"
-	"vanekt/test-social-network-api/util"
 )
 
 var wsUpgrader = websocket.Upgrader{

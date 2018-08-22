@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"database/sql"
+	"github.com/vanekt/test-social-network-api/error"
+	"github.com/vanekt/test-social-network-api/model"
 	"strconv"
-	"vanekt/test-social-network-api/error"
-	"vanekt/test-social-network-api/model"
 )
 
 type UserController struct {

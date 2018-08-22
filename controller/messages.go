@@ -3,13 +3,13 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/op/go-logging"
+	"github.com/vanekt/test-social-network-api/entity"
+	"github.com/vanekt/test-social-network-api/error"
+	"github.com/vanekt/test-social-network-api/model"
+	"github.com/vanekt/test-social-network-api/util"
 	"net/http"
 	"os"
 	"strconv"
-	"vanekt/test-social-network-api/entity"
-	"vanekt/test-social-network-api/error"
-	"vanekt/test-social-network-api/model"
-	"vanekt/test-social-network-api/util"
 )
 
 type MessagesController struct {

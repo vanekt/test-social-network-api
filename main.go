@@ -5,9 +5,9 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/op/go-logging"
+	"github.com/vanekt/test-social-network-api/controller"
+	"github.com/vanekt/test-social-network-api/model"
 	"os"
-	"vanekt/test-social-network-api/controller"
-	"vanekt/test-social-network-api/model"
 )
 
 func main() {
