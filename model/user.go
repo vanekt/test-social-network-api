@@ -24,3 +24,8 @@ func (m *UserModel) GetUserByLogin(login string) (user entity.User, err error) {
 	err = m.db.Get(&user, "select * from users where login = ?", login)
 	return
 }
+
+func (m *UserModel) GetAll() (users []entity.User, err error) {
+	err = m.db.Select(&users, "select * from users")
+	return
+}

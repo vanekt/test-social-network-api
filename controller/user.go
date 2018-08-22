@@ -47,3 +47,18 @@ func (c *UserController) GetUserById(ctx *gin.Context) {
 	})
 	return
 }
+
+func (c *UserController) GetAll(ctx *gin.Context) {
+	users, err := c.userModel.GetAll()
+	if err != nil {
+		c.logger.Errorf("[UserController GetAll] error: %v", err.Error())
+		ctx.JSON(http.StatusInternalServerError, error.HttpResponseErrorInternalServerError)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"payload": users,
+	})
+	return
+}

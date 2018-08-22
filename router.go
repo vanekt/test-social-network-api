@@ -21,6 +21,7 @@ func configureRouter(
 
 	// -------------------------------
 	users := v1.Group("/users")
+	users.GET("/", userController.GetAll)
 	users.GET("/:id", userController.GetUserById)
 
 	// -------------------------------
